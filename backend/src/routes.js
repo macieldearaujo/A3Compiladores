@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { userSchema, updateUserRuleSchema } from './domain/users/usersModel.js';
 import { loginSchema } from './domain/auth/authModel.js';
-import { create_user } from './domain/users/business_rules/users.js';
+import { create_user, get_user_by_email, update_user } from './domain/users/business_rules/users.js';
 const router = Router();
 
 
@@ -28,7 +28,7 @@ router.post('/users/create', async (req, res) => {
     try {
         const response_create = await create_user(value);
         if (response_create.error) {
-            return res.status(400).json({ error: response_create.error });
+            return res.status(response_create.status).json({ error: response_create.error });
         }
         return res.status(201).json(response_create);
     } catch (err) {
@@ -36,19 +36,36 @@ router.post('/users/create', async (req, res) => {
     }
 });
 
-router.get('/users/:id', (req, res) => {
-    res.json({ message: "Users id" });
-});
+router.get('/users/:email', async (req, res) => {
+    try {
+        const response = await get_user_by_email(req.params.email);
 
+        if (response.error) {
+            return res.status(response.status).json({ error: response.error });
+        }
+
+        return res.status(200).json(response);
+    } catch (err) {
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+/*
 router.get('/users/list', (req, res) => {
     res.json({ message: "Users list" });
 });
-
-router.patch('/users/update', (req, res) => {
+*/
+router.patch('/users/update',async (req, res) => {
     const { error, value } = updateUserRuleSchema.validate(req.body);
+
     if (error) {
         return res.status(400).json({ error: error.details[0].message });
     }
+    const response = await update_user(value);
+
+    if (response.error) {
+        return res.status(response.status).json({ error: response.error });
+    }
+
     res.json({ message: "Users update" });
 });
 

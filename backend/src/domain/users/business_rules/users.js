@@ -1,4 +1,4 @@
-import { find_one_on_database, insert_on_database, update_one_on_database } from "../../../infrastructure/drivers/mongo/adapter.js";
+import { find_one_on_database, insert_on_database, update_one_on_database, delete_one_on_database } from "../../../infrastructure/drivers/mongo/adapter.js";
 import { v4 as uuidv4 } from 'uuid'
 import { userInfoSchema } from '../usersModel.js';
 
@@ -59,11 +59,13 @@ export async function list_users() {
   }
 }
 */
-export async function update_user(email, updated_info) {
+export async function update_user(updated_info) {
+
   try {
+    const data_update = {role: updated_info.role};
     const result = await update_one_on_database(
-      { email: email },
-      { $set: updated_info }
+      { email: updated_info.email },
+      { $set: data_update }
     );
 
     if (result.modifiedCount === 0) {
@@ -78,13 +80,13 @@ export async function update_user(email, updated_info) {
 
 export async function delete_user(email) {
   try {
-    const result = await delete_on_database({ email: email });
+    const result = await delete_one_on_database({ email: email });
 
     if (result.deletedCount === 0) {
       return { error: "User not found or already deleted" };
     }
 
-    return { message: "User deleted successfully" };
+    return { message: "User deleted successfully", status: 200 };
   } catch (error) {
     return { error: "Failed to delete user", details: error.message };
   }

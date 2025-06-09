@@ -1,6 +1,7 @@
 import { find_one_on_database, insert_on_database, update_one_on_database, delete_one_on_database } from "../../../infrastructure/drivers/mongo/adapter.js";
 import { v4 as uuidv4 } from 'uuid'
 import { userInfoSchema } from '../usersModel.js';
+import bcrypt from 'bcrypt';
 
 
 export async function create_user(user_info) {
@@ -8,18 +9,19 @@ export async function create_user(user_info) {
     const query = {
       email: user_info.email,
     };
-    const user_on_db = await find_one_on_database(query, { projection: { _id: 0 } });
+    const user_on_db = await find_one_on_database(query, { projection: { _id: 0 } }, "users");
 
     if (user_on_db != null) {
       return { error: "User already exists", status: 409 };
     }
-
+    
     user_info.id = uuidv4();
+    user_info.password = await bcrypt.hash(user_info.password, 10);
     const json_user_info = JSON.parse(JSON.stringify(user_info));
     const response = await insert_on_database(json_user_info);
 
     if (response.acknowledged) {
-      return { message: "User created successfully", user: response.insertedId, status: 201 };
+      return { message: "User created successfully", userId: user_info.id, status: 201 };
     } else {
       return { error: "Failed to create user", status: 500 };
     }
@@ -33,7 +35,11 @@ export async function get_user_by_email(email) {
   try {
 
     const user = await find_one_on_database(
-      { email: email }, { projection: { _id: 0, password: 0 } }
+      { email: email }, 
+      { projection: 
+        { _id: 0, password: 0 }
+      },
+      "users"
     );
 
     if (!user) {
@@ -65,7 +71,8 @@ export async function update_user(updated_info) {
     const data_update = {role: updated_info.role};
     const result = await update_one_on_database(
       { email: updated_info.email },
-      { $set: data_update }
+      { $set: data_update },
+      "users"
     );
 
     if (result.modifiedCount === 0) {
@@ -80,7 +87,7 @@ export async function update_user(updated_info) {
 
 export async function delete_user(email) {
   try {
-    const result = await delete_one_on_database({ email: email });
+    const result = await delete_one_on_database({ email: email },"users");
 
     if (result.deletedCount === 0) {
       return { error: "User not found or already deleted" };

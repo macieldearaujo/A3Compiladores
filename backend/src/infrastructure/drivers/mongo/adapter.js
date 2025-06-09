@@ -4,14 +4,14 @@ async function getClient(){
     return await mongoConnector();
 };
 
-export async function insert_on_database(data) {
+export async function insert_on_database(data, collectionName) {
     const client = await getClient();
     try {
         await client.connect();
 
         const database = client.db("corpFlow");
-        const collection = database.collection("users");
-        result = await collection.insertOne(data);
+        const collection = database.collection(collectionName);
+        const result = await collection.insertOne(data);
         return result;
 
     } catch (error) {
@@ -22,13 +22,13 @@ export async function insert_on_database(data) {
     }
 };
 
-export async function find_one_on_database(query, projection) {
+export async function find_one_on_database(query, projection, collectionName) {
     const client = await getClient();
     try {
         await client.connect();
 
         const database = client.db("corpFlow");
-        const collection = database.collection("users");
+        const collection = database.collection(collectionName);
         const result = await collection.findOne(query, projection);
         return result;
 
@@ -40,13 +40,13 @@ export async function find_one_on_database(query, projection) {
     }
 };
 
-export async function delete_one_on_database(data) {
+export async function delete_one_on_database(data, collectionName) {
     const client = await getClient();
     try {
         await client.connect();
 
         const database = client.db("corpFlow");
-        const collection = database.collection("users");
+        const collection = database.collection(collectionName);
 
         return await collection.deleteOne(data);
     } catch (error){
@@ -57,14 +57,14 @@ export async function delete_one_on_database(data) {
     }
 }
 
-export async function update_one_on_database(filter, data) {
+export async function update_one_on_database(filter, data, collectionName) {
     const client = await getClient();
     try {
         await client.connect();
 
         const database = client.db("corpFlow");
-        const collection = database.collection("users");
-    
+        const collection = database.collection(collectionName);
+
         return await collection.updateOne(filter, data);
     } catch (error){
         console.error('Erro ao atualizar:', error);

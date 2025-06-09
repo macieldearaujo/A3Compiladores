@@ -7,9 +7,7 @@ export const loginSchema = Joi.object({
 
 export const loginResponseSchema = Joi.object({
     token: Joi.string().required(),
-    user: Joi.object({
-        id: Joi.string().required(),
-        name: Joi.string().required(),
-        role: Joi.string().required()
-    })
+    id: Joi.string().required(),
+    name: Joi.string().required(),
+    role: Joi.string().required()
 });

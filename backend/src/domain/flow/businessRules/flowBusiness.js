@@ -1,4 +1,4 @@
-import { find_one_on_database, insert_on_database} from "../../../infrastructure/drivers/mongo/adapter.js";
+import { find_one_on_database, insert_on_database, find_many_on_database, delete_one_on_database} from "../../../infrastructure/drivers/mongo/adapter.js";
 import { v4 as uuidv4 } from 'uuid'
 
 
@@ -36,5 +36,51 @@ export async function create_flow(flow_info, userId) {
     }
   } catch (error) {
     return { error: "Ocorreu um erro inesperado", details: error.message, status: 500 };
+  }
+}
+
+export async function get_all_flows() {
+  try {
+    const query = {};
+    const flow_on_db = await find_many_on_database(query, { projection: { _id: 0 } }, "flows");
+
+    if (flow_on_db === null) {
+      return { message: "Nenhum Fluxo não encontrado", status: 200 };
+    }
+    const json_flow_info = JSON.parse(JSON.stringify(flow_on_db));
+
+    return { message: "Fluxos encontrados", data: json_flow_info, status: 200 };
+  } catch (error) {
+    return { error: "Ocorreu um erro inesperado", details: error.message, status: 500 };
+  }
+}
+export async function get_flows_by_id(id) {
+  try {
+    const query = {flowId: id};
+    const flow_on_db = await find_one_on_database(query, { projection: { _id: 0 } }, "flows");
+
+    if (flow_on_db === null) {
+      return { message: "Fluxo não encontrado", status: 404 };
+    }
+    const json_flow_info = JSON.parse(JSON.stringify(flow_on_db));
+
+    return { message: "Fluxo encontrado", data: json_flow_info, status: 200 };
+  } catch (error) {
+    return { error: "Ocorreu um erro inesperado", details: error.message, status: 500 };
+  }
+}
+
+
+export async function delete_flow(id) {
+  try {
+    const result = await delete_one_on_database({ flowId: id },"flows");
+
+    if (result.deletedCount === 0) {
+      return { error: "Fluxo não encontrado ou já excluído", status: 404 };
+    }
+
+    return { message: "Fluxo excluído com sucesso", status: 200 };
+  } catch (error) {
+    return { error: "Falha ao excluir fluxo", details: error.message, status: 500 };
   }
 }

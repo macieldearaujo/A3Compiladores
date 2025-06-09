@@ -73,3 +73,21 @@ export async function update_one_on_database(filter, data, collectionName) {
         await client.close();
     }
 }
+
+const client = await getClient();
+export async function find_many_on_database(query, projection, collectionName) {
+    try {
+        await client.connect();
+
+        const database = client.db("corpFlow");
+        const collection = database.collection(collectionName);
+        const result = await collection.find(query, projection).toArray();
+        return result;
+
+    } catch (error) {
+        console.error('Erro ao realizar busca:', error);
+        throw error;
+    } finally {
+        await client.close();
+    }
+};

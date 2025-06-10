@@ -17,14 +17,14 @@ export function authenticate(req, res, next) {
 }
 
 export function verifyManager(req, res, next) {
-  if (req.user?.role !== 'gerente') {
+  if (req.user?.role.toLowerCase() !== 'gerente') {
     return res.status(403).json({ erro: 'Apenas gerentes podem executar essa ação.' });
   }
   next();
 }
 
 export function verifyCollaborator(req, res, next) {
-  if (req.user?.role !== 'colaborador') {
+  if (req.user?.role.toLowerCase() !== 'colaborador') {
     return res.status(403).json({ erro: 'Apenas colaboradores podem executar essa ação.' });
   }
   next();

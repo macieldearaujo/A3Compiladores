@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { createFlow, getAllFlows, getFlowsById, deleteFlow, updateFlow } from '../domain/flow/businessRules/flowBusiness.js';
-import { createFlowSchema, updateFlowSchema } from '../domain/flow/flowModel.js';
-import { authenticate, verifyManager } from '../domain/auth/validateAuth.js';
+import { createFlow, getAllFlows, getFlowsById, deleteFlow, updateFlow } from '../domain/businessRules/flowRules.js';
+import { createFlowSchema, updateFlowSchema } from '../domain/models/flowModel.js';
+import { authenticate, verifyManager } from '../domain/validations/validateAuth.js';
 
 const flowRoutes = Router();
 
@@ -13,7 +13,7 @@ flowRoutes.post('/create', authenticate, verifyManager, async (req, res) => {
         return res.status(400).json({ error: error.details[0].message });
     }
     try {
-        const response = await createFlow(req.body, req.user.id);
+        const response = await createFlow(req.body, req.user.id, req.user.role);
         if (response.error) {
             return res.status(response.status).json({ error: response.error });
         }
@@ -23,10 +23,11 @@ flowRoutes.post('/create', authenticate, verifyManager, async (req, res) => {
     }
 });
 
-flowRoutes.get('/', async (req, res) => {
-    // rota acessivel a usuarios autenticados, permite ver todos os fluxos
+flowRoutes.get('/',authenticate, async (req, res) => {
+    // rota acessivel a usuarios autenticados, permite ver todos os fluxos do usuario, 
+    // no caso de gerente todos os fluxos
     try {
-        const response = await getAllFlows();
+        const response = await getAllFlows(req.user.role);
         if (response.error) {
             return res.status(response.status).json({ error: response.error });
         }
@@ -69,7 +70,7 @@ flowRoutes.put('/:id', authenticate, verifyManager, async (req, res) => {
 flowRoutes.delete('/:id', authenticate, verifyManager, async (req, res) => {
     // rota acessivel para o gerente, permite deletar um fluxo por id
     try {
-        const response = await deleteFlow(req.params.id);
+        const response = await deleteFlow(req.params.id, req.user.role);
 
         if (response.error) {
             return res.status(response.status).json({ error: response.error });
@@ -82,15 +83,3 @@ flowRoutes.delete('/:id', authenticate, verifyManager, async (req, res) => {
 });
 
 export default flowRoutes;
-
-/**
- * 
- * | Método | Rota   | Ação                   | Acesso      |
-| ------ | ------ | ---------------------- | ----------- |
-| POST   | `/`    | Criar novo fluxo       | **Gerente** |
-| GET    | `/`    | Listar todos os fluxos | Autenticado |
-| GET    | `/:id` | Buscar fluxo por ID    | **Gerente** |
-| PUT    | `/:id` | Atualizar fluxo por ID | **Gerente** |
-| DELETE | `/:id` | Deletar fluxo por ID   | **Gerente** |
-
- */

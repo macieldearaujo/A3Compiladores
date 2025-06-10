@@ -1,23 +1,24 @@
 import bcrypt from 'bcrypt';
-import { find_one_on_database } from "../../../infrastructure/drivers/mongo/adapter.js";
+import { findOneOnDatabase } from "../../infrastructure/drivers/mongo/adapter.js";
 import jwt from 'jsonwebtoken';
-import { loginResponseSchema } from '../authModel.js';
+import { loginResponseSchema } from '../models/authModel.js';
+import { collectionNames } from '../../infrastructure/constants/mongoConstants.js';
 
 
 export async function userLogin(loginInfo) {
     try {
-        const user = await find_one_on_database(
+        const user = await findOneOnDatabase(
             { email: loginInfo.email }, { projection: { _id: 0} },
-            "users"
+            collectionNames.users
         );
 
         if (!user) {
-            return { error: "Invalid credentials", status: 401 };
+            return { error: "Credenciais inválidas", status: 401 };
         }
 
         const isMatch = await bcrypt.compare(loginInfo.password, user.password);
         if (!isMatch) {
-            return { error: "Invalid credentials", status: 401 };
+            return { error: "Credenciais inválidas", status: 401 };
         }
 
         const token = jwt.sign(
@@ -31,11 +32,11 @@ export async function userLogin(loginInfo) {
         const { error, value } = loginResponseSchema.validate(user);
 
         if (error) {
-            return { error: "Error to return token details", status: 400 };
+            return { error: "Erro ao retornar detalhes do token", status: 400 };
         }
 
         return { value, status: 200 };
     } catch (error) {
-        return { error: "Login failed", details: error.message, status: 500 };
+        return { error: "Falha no login", details: error.message, status: 500 };
     }
 }

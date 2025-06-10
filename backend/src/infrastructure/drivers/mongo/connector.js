@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
 import { MongoClient } from 'mongodb';
 
-dotenv.config({path: '../../.env'});
+dotenv.config({ path: '../../../.env' });
 
 export async function mongoConnector() {
     const host = "localhost"//process.env.MONGO_HOST;

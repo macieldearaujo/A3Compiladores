@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { loginSchema } from '../domain/auth/authModel.js';
-import { userLogin } from '../domain/auth/businessRules/authBusiness.js';
+import { loginSchema } from '../domain/models/authModel.js';
+import { userLogin } from '../domain/businessRules/authRules.js';
 
 
 const authRoutes = Router();

@@ -1,64 +1,56 @@
-import e, { Router } from 'express';
+import { Router } from 'express';
+import { createTaskSchema, updateTaskSchema} from '../domain/models/taskModel.js';
+import { createTask, getAllTasks, updateStatusTask } from '../domain/businessRules/taskRules.js';
+import { authenticate, verifyManager } from '../domain/validations/validateAuth.js';
 
 const taskRoutes = Router();
 
 
-taskRoutes.post('/create', async (req, res) => {
-     // rota acessivel para o gerente
-    //const { error } = validateUser(req.body);
-    //if (error) {
-    //    return res.status(400).json({ error: error.details[0].message });
-    //}
-    try {
-        //const response_create = await create_user(req.body);
-        //if (response_create.error) {
-        //    return res.status(response_create.status).json({ error: response_create.error });
-        //}
-        return res.status(201).json(response_create);
-    } catch (err) {
-        return res.status(500).json({ error: 'Internal server error' });
-    }
-});
-/*
-taskRoutes.get('/', async (req, res) => {
-     // rota acessivel para usuarios autenticados
-    const { error } = validateUser(req.body);
+taskRoutes.post('/create', authenticate, verifyManager, async (req, res) => {
+    // rota acessivel para o gerente
+    const { error } = createTaskSchema.validate(req.body);
     if (error) {
         return res.status(400).json({ error: error.details[0].message });
     }
     try {
-        const response_create = await create_user(req.body);
-        if (response_create.error) {
-            return res.status(response_create.status).json({ error: response_create.error });
+        const response = await createTask(req.body, req.user.id, req.user.role);
+        if (response.error) {
+            return res.status(response.status).json({ error: response.error });
         }
-        return res.status(201).json(response_create);
+        return res.status(201).json(response);
     } catch (err) {
         return res.status(500).json({ error: 'Internal server error' });
     }
 });
-taskRoutes.get('/:id/status', async (req, res) => {
-     // rota acessivel para usuarios autenticados
-    const { error } = validateUser(req.body);
-    if (error) {
-        return res.status(400).json({ error: error.details[0].message });
-    }
-    try {
-        const response_create = await create_user(req.body);
-        if (response_create.error) {
-            return res.status(response_create.status).json({ error: response_create.error });
-        }
-        return res.status(201).json(response_create);
-    } catch (err) {
-        return res.status(500).json({ error: 'Internal server error' });
-    }
-});
-*/
-export default taskRoutes;
-/**
- * | Método | Rota          | Ação                       | Acesso      |
-| ------ | ------------- | -------------------------- | ----------- |
-| GET    | `/`           | Listar todas as tarefas    | Autenticado |
-| POST   | `/`           | Criar nova tarefa          | **Gerente** |
-| PATCH  | `/:id/status` | Atualizar status da tarefa | Autenticado |
 
- */
+taskRoutes.get('/', authenticate, async (req, res) => {
+    // rota acessivel para usuarios autenticados, lista todas as tarefas
+    try {
+        const response = await getAllTasks(req.user.id, req.user.role);
+        if (response.error) {
+            return res.status(response.status).json({ error: response.error });
+        }
+        return res.status(200).json(response);
+    } catch (err) {
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+taskRoutes.patch('/:id', authenticate, async (req, res) => {
+    // rota acessivel para usuarios autenticados, atualiza o status da tarefa
+    const { error } = updateTaskSchema.validate(req.body);
+    if (error) {
+        return res.status(400).json({ error: error.details[0].message });
+    }
+    try {
+        const response = await updateStatusTask(req.params.id, req.body, req.user.id, req.user.role);
+        if (response.error) {
+            return res.status(response.status).json({ error: response.error });
+        }
+        return res.status(201).json(response);
+    } catch (err) {
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+export default taskRoutes;

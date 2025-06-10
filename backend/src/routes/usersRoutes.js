@@ -1,31 +1,31 @@
 import { Router } from 'express';
-import { userSchema, validateUser, updateUserRuleSchema } from '../domain/users/usersModel.js';
-import { create_user, get_user_by_email, update_user, delete_user } from '../domain/users/business_rules/users.js';
+import { userSchema, updateUserRuleSchema } from '../domain/models/usersModel.js';
+import { createUser, getUserById, updateUser, deleteUser, getAllUsers } from '../domain/businessRules/usersRules.js';
+import { authenticate, verifyManager } from '../domain/validations/validateAuth.js';
 
 const usersRoutes = Router();
 
-//users
 usersRoutes.post('/create', async (req, res) => {
-     // rota acessivel para todos os usuarios, mas somente o gerente pode definir o perfil para gerente em novos usuarios
-    const { error } = validateUser(req.body);
+    // rota acessivel para todos os usuarios
+    const { error } = userSchema.validate(req.body);
     if (error) {
         return res.status(400).json({ error: error.details[0].message });
     }
     try {
-        const response_create = await create_user(req.body);
-        if (response_create.error) {
-            return res.status(response_create.status).json({ error: response_create.error });
+        const response = await createUser(req.body);
+        if (response.error) {
+            return res.status(response.status).json({ error: response.error });
         }
-        return res.status(201).json(response_create);
+        return res.status(201).json(response);
     } catch (err) {
         return res.status(500).json({ error: 'Internal server error' });
     }
 });
 
-usersRoutes.get('/:email', async (req, res) => {
+usersRoutes.get('/:id', authenticate, verifyManager, async (req, res) => {
     // rota acessivel somente para o gerente!
     try {
-        const response = await get_user_by_email(req.params.email);
+        const response = await getUserById(req.params.id, req.user.role);
 
         if (response.error) {
             return res.status(response.status).json({ error: response.error });
@@ -36,31 +36,40 @@ usersRoutes.get('/:email', async (req, res) => {
         return res.status(500).json({ error: 'Internal server error' });
     }
 });
-/*
-router.get('/users/list', (req, res) => {
-    res.json({ message: "Users list" });
+
+usersRoutes.get('/', authenticate, verifyManager, async (req, res) => {
+    // rota acessivel somente para o gerente, lista todos os usuarios
+    try {
+        const response = await getAllUsers(req.user.role);
+        if (response.error) {
+            return res.status(response.status).json({ error: response.error });
+        }
+        return res.status(200).json(response);
+    } catch (err) {
+        return res.status(500).json({ error: 'Internal server error' });
+    }
 });
-*/
-usersRoutes.patch('/update',async (req, res) => {
-    // rota acessivel somente para o gerente?!
-    const { error, value } = updateUserRuleSchema.validate(req.body);
+
+usersRoutes.patch('/update', authenticate, verifyManager, async (req, res) => {
+    // rota acessivel somente para o gerente
+    const { error } = updateUserRuleSchema.validate(req.body);
 
     if (error) {
         return res.status(400).json({ error: error.details[0].message });
     }
-    const response = await update_user(value);
+    const response = await updateUser(req.body, req.user.role);
 
     if (response.error) {
         return res.status(response.status).json({ error: response.error });
     }
 
-    return res.status(200).json({ message: "User updated successfully" });
+    return res.status(200).json({ message: "Usuario atualizado com sucesso" });
 });
 
-usersRoutes.delete('/:email', async (req, res) => {
+usersRoutes.delete('/:id', authenticate, verifyManager, async (req, res) => {
     // rota acessivel somente para o gerente!
     try {
-        const response = await delete_user(req.params.email);
+        const response = await deleteUser(req.params.id, req.user.role);
 
         if (response.error) {
             return res.status(response.status).json({ error: response.error });

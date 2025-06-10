@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import {create_flow, get_all_flows, get_flows_by_id, delete_flow } from '../domain/flow/businessRules/flowBusiness.js';
-import { createFlowSchema } from '../domain/flow/flowModel.js';
-import { authenticate, verifyManager }  from '../domain/auth/validateAuth.js';
+import { createFlow, getAllFlows, getFlowsById, deleteFlow, updateFlow } from '../domain/flow/businessRules/flowBusiness.js';
+import { createFlowSchema, updateFlowSchema } from '../domain/flow/flowModel.js';
+import { authenticate, verifyManager } from '../domain/auth/validateAuth.js';
 
 const flowRoutes = Router();
 
@@ -13,11 +13,11 @@ flowRoutes.post('/create', authenticate, verifyManager, async (req, res) => {
         return res.status(400).json({ error: error.details[0].message });
     }
     try {
-        const response_create = await create_flow(req.body, req.user.id);
-        if (response_create.error) {
-            return res.status(response_create.status).json({ error: response_create.error });
+        const response = await createFlow(req.body, req.user.id);
+        if (response.error) {
+            return res.status(response.status).json({ error: response.error });
         }
-        return res.status(201).json(response_create);
+        return res.status(201).json(response);
     } catch (err) {
         return res.status(500).json({ error: 'Internal server error' });
     }
@@ -26,7 +26,7 @@ flowRoutes.post('/create', authenticate, verifyManager, async (req, res) => {
 flowRoutes.get('/', async (req, res) => {
     // rota acessivel a usuarios autenticados, permite ver todos os fluxos
     try {
-        const response = await get_all_flows();
+        const response = await getAllFlows();
         if (response.error) {
             return res.status(response.status).json({ error: response.error });
         }
@@ -36,10 +36,10 @@ flowRoutes.get('/', async (req, res) => {
     }
 });
 
-flowRoutes.get('/:id', async (req, res) => {
+flowRoutes.get('/:id', authenticate, verifyManager, async (req, res) => {
     // rota acessivel para o gerente, permite ver um fluxo por id
     try {
-        const response = await get_flows_by_id(req.params.id);
+        const response = await getFlowsById(req.params.id);
         if (response.error) {
             return res.status(response.status).json({ error: response.error });
         }
@@ -48,37 +48,37 @@ flowRoutes.get('/:id', async (req, res) => {
         return res.status(500).json({ error: 'Internal server error' });
     }
 });
-/*
-flowRoutes.put('/:id', async (req, res) => {
-     // rota acessivel para o gerente pode definir o perfil para gerente em novos usuarios
-    const { error } = validateUser(req.body);
+
+flowRoutes.put('/:id', authenticate, verifyManager, async (req, res) => {
+    // rota acessivel para o gerente, permite atualizar um fluxo por id
+    const { error } = updateFlowSchema.validate(req.body);
     if (error) {
         return res.status(400).json({ error: error.details[0].message });
     }
     try {
-        const response_create = await create_user(req.body);
-        if (response_create.error) {
-            return res.status(response_create.status).json({ error: response_create.error });
+        const response = await updateFlow(req.body);
+        if (response.error) {
+            return res.status(response.status).json({ error: response.error });
         }
-        return res.status(201).json(response_create);
+        return res.status(201).json(response);
     } catch (err) {
         return res.status(500).json({ error: 'Internal server error' });
     }
 });
-*/
-flowRoutes.delete('/:id', async (req, res) => {
-    // rota acessivel para o gerente pode definir o perfil para gerente em novos usuarios
+
+flowRoutes.delete('/:id', authenticate, verifyManager, async (req, res) => {
+    // rota acessivel para o gerente, permite deletar um fluxo por id
     try {
-            const response = await delete_flow(req.params.id);
-    
-            if (response.error) {
-                return res.status(response.status).json({ error: response.error });
-            }
-    
-            return res.status(200).json(response);
-        } catch (err) {
-            return res.status(500).json({ error: 'Internal server error' });
+        const response = await deleteFlow(req.params.id);
+
+        if (response.error) {
+            return res.status(response.status).json({ error: response.error });
         }
+
+        return res.status(200).json(response);
+    } catch (err) {
+        return res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 export default flowRoutes;

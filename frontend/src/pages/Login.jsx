@@ -1,12 +1,30 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import api from '../services/api';
 
 export default function Login() {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [senha, setSenha] = useState('');
+  const [erro, setErro] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login com:', { email, password });
+    setErro('');
+
+    try {
+      const response = await api.post('/auth/login', {
+        email,
+        password: senha,
+      });
+
+      const { token, user } = response.data;
+
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      window.location.href = '/dashboard';
+    } catch (err) {
+      setErro(err.response?.data?.error || 'Erro ao fazer login');
+    }
   };
 
   return (
@@ -37,12 +55,16 @@ export default function Login() {
               id="password"
               type="password"
               required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
               className="w-full border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="********"
             />
           </div>
+
+          {erro && (
+            <p className="text-red-500 text-sm text-center -mt-2">{erro}</p>
+          )}
 
           <button
             type="submit"

@@ -12,6 +12,10 @@ export default function Dashboard() {
     navigate("/gerente/fluxos-existentes");
   }
 
+  function abrirCriarFluxo() {
+    navigate("/gerente/criar-fluxo");
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="max-w-3xl w-full bg-white p-8 rounded shadow">
@@ -21,11 +25,14 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="border border-gray-300 rounded p-6 text-center hover:shadow-lg cursor-pointer transition">
-            <h2 className="text-xl font-semibold mb-2">Criar Novo Fluxo</h2>
+            <h2 className="text-xl font-semibold mb-2"
+            onClick={abrirCriarFluxo}
+            >Criar Novo Fluxo</h2>
             <p className="text-gray-600 mb-4">
               Monte um fluxo de trabalho do zero.
             </p>
-            <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+            <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
+            onClick={abrirCriarFluxo}>
               Novo Fluxo
             </button>
           </div>

@@ -15,7 +15,6 @@ export default function FluxosExistentes() {
   }
 
   function handleEditar(id) {
-    // Exemplo: redirecionar para página de edição do fluxo
     navigate(`/fluxos/${id}/editar`);
   }
 

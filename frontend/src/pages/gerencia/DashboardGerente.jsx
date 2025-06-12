@@ -1,6 +1,13 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  function handleLogout() {
+
+    navigate("/");
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="max-w-3xl w-full bg-white p-8 rounded shadow">
@@ -41,7 +48,8 @@ export default function Dashboard() {
         </div>
 
         <div className="mt-10 text-center">
-          <button className="text-red-600 hover:text-red-800 font-semibold">
+          <button className="text-red-600 hover:text-red-800 font-semibold" 
+          onClick={handleLogout}>
             Sair
           </button>
         </div>

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Login from './pages/Login';
 import DashboardGerente from './pages/gerencia/DashboardGerente';
 import DashboardColaborador from './pages/colaborador/DashboardColaborador';
+import FluxosExistentes from './pages/colaborador/FluxosExistentes';
 import FlowBuilder from './pages/FlowBuilder';
 import TaskList from './pages/TaskList';
 
@@ -12,6 +13,7 @@ function App() {
                 <Route path="/" element={<Login />} />
                 <Route path="/gerente/dashboard" element={<DashboardGerente />} />
                 <Route path="/colaborador/dashboard" element={<DashboardColaborador />} />
+                <Route path="/gerente/fluxos-existentes" element={<FluxosExistentes />} />
                 <Route path="/flow-builder" element={<FlowBuilder />} />
                 <Route path="/task-list" element={<TaskList />} />
             </Routes>

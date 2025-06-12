@@ -15,7 +15,7 @@ export default function FluxosExistentes() {
   }
 
   function handleEditar(id) {
-    navigate(`/fluxos/${id}/editar`);
+    navigate(`/gerente/fluxos/${id}/editar`);
   }
 
   return (

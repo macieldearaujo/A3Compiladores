@@ -12,6 +12,10 @@ export default function DashboardColaborador() {
         navigate("/colaborador/tarefas-pendentes");
     }
 
+    function  handleTarefasConcluidas() {
+        navigate("/colaborador/tarefas-concluidas");
+    }
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
             <div className="max-w-3xl w-full bg-white p-8 rounded shadow">
@@ -36,7 +40,8 @@ export default function DashboardColaborador() {
                         <p className="text-gray-600 mb-4">
                             Confira o histórico de tarefas já finalizadas.
                         </p>
-                        <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+                        <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
+                            onClick={handleTarefasConcluidas}>
                             Histórico
                         </button>
                     </div>

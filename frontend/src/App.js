@@ -4,6 +4,7 @@ import DashboardGerente from './pages/gerencia/DashboardGerente';
 import DashboardColaborador from './pages/colaborador/DashboardColaborador';
 import FluxosExistentes from './pages/gerencia/FluxosExistentes';
 import CriarNovoFluxo from './pages/gerencia/CriarNovoFluxo';
+import TarefasPendentes from './pages/colaborador/TarefasPendentes';
 import StatusTarefas from './pages/gerencia/StatusTarefas';
 import FlowBuilder from './pages/FlowBuilder';
 import TaskList from './pages/TaskList';
@@ -18,6 +19,7 @@ function App() {
                 <Route path="/gerente/fluxos-existentes" element={<FluxosExistentes />} />
                 <Route path="/gerente/criar-fluxo" element={<CriarNovoFluxo />} />
                 <Route path="/gerente/status-tarefas" element={<StatusTarefas />} />
+                <Route path="/colaborador/tarefas-pendentes" element={<TarefasPendentes />} />
                 <Route path="/flow-builder" element={<FlowBuilder />} />
                 <Route path="/task-list" element={<TaskList />} />
             </Routes>

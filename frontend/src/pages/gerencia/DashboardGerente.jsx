@@ -16,6 +16,10 @@ export default function Dashboard() {
     navigate("/gerente/criar-fluxo");
   }
 
+  function abrirStatusTarefas() {
+    navigate("/gerente/status-tarefas");
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="max-w-3xl w-full bg-white p-8 rounded shadow">
@@ -25,9 +29,7 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
           <div className="border border-gray-300 rounded p-6 text-center hover:shadow-lg cursor-pointer transition">
-            <h2 className="text-xl font-semibold mb-2"
-            onClick={abrirCriarFluxo}
-            >Criar Novo Fluxo</h2>
+            <h2 className="text-xl font-semibold mb-2">Criar Novo Fluxo</h2>
             <p className="text-gray-600 mb-4">
               Monte um fluxo de trabalho do zero.
             </p>
@@ -53,7 +55,8 @@ export default function Dashboard() {
             <p className="text-gray-600 mb-4">
               Acompanhe andamento das tarefas dos colaboradores.
             </p>
-            <button className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">
+            <button className="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition"
+            onClick={abrirStatusTarefas}>
               Ver Status
             </button>
           </div>

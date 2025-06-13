@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { collectionNames } from "../../infrastructure/constants/mongoConstants.js";
 
 
-export async function createFlow(flowInfo, userId, userRole) {  
+export async function createFlow(flowInfo, userId, userRole) {
   try {
     if (userRole.toLowerCase() !== "gerente") {
       return { error: "Acesso negado", status: 403 };
@@ -103,8 +103,8 @@ export async function updateFlow(flowInfo) {
     const query = {
       name: flowInfo.name,
     };
-    const flowOnDb = await findOneOnDatabase(query, 
-      { projection: { _id: 0, name: 1, flowId: 1, active:1 , flowId: 1} }, 
+    const flowOnDb = await findOneOnDatabase(query,
+      { projection: { _id: 0, name: 1, flowId: 1, active: 1, flowId: 1 } },
       collectionNames.flows);
 
     if (flowOnDb != null && flowOnDb.active === false) {
@@ -126,7 +126,7 @@ export async function updateFlow(flowInfo) {
     if (!jsonFlowInfo.step || jsonFlowInfo.step.length === 0) {
       return { error: "Fluxo deve conter pelo menos um passo", status: 400 };
     }
-    
+
     for (const step of jsonFlowInfo.step) {
       const findResponsible = await findOneOnDatabase({ id: step.responsible },
         { projection: { _id: 0, password: 0 } }, collectionNames.users);

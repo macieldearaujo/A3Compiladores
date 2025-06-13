@@ -72,7 +72,7 @@ export default function CriarTarefa() {
     try {
       await api.post("/tasks/create", novaTarefa);
       setMensagem("Tarefa criada com sucesso!");
-      setTimeout(() => navigate("/gerencia/status-tarefas"), 1500);
+      setTimeout(() => navigate("/gerencia/criar-tarefa"), 1500);
     } catch (err) {
       setErro(err.response?.data?.error || "Erro ao criar tarefa");
     }

@@ -23,7 +23,7 @@ export default function Cadastro() {
       name: nome,
       email,
       password: senha,
-      role: 'Colaborador',
+      role: 'colaborador',
     });
 
     setSucesso('Conta criada com sucesso! Faça login.');

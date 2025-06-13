@@ -1,64 +1,81 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-const fluxosMock = [
-  { id: 1, nome: "Aprovação de Pedido", status: "Ativo" },
-  { id: 2, nome: "Relatório Mensal", status: "Em revisão" },
-  { id: 3, nome: "Cadastro de Fornecedor", status: "Concluído" },
-];
+const api = axios.create({
+  baseURL: 'http://localhost:5000/api',
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 
 export default function FluxosExistentes() {
+  const [fluxos, setFluxos] = useState([]);
+  const [erro, setErro] = useState('');
   const navigate = useNavigate();
 
-  function handleVoltar() {
-    navigate(-1);
-  }
+  useEffect(() => {
+    const fetchFluxos = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await api.get('/flows', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-  function handleEditar(id) {
-    navigate(`/gerente/fluxos/${id}/editar`);
-  }
+        setFluxos(response.data.data || []);
+      } catch (err) {
+        setErro(err.response?.data?.error || 'Erro ao buscar fluxos');
+      }
+    };
+
+    fetchFluxos();
+  }, []);
+
+  const visualizarDetalhes = (id) => {
+    navigate(`/gerencia/fluxo/${id}`);
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="max-w-4xl w-full bg-white p-8 rounded shadow">
-        <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">
-          Fluxos Existentes
-        </h1>
+        <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">Fluxos Existentes</h2>
 
-        <table className="w-full table-auto border-collapse border border-gray-300">
-          <thead>
-            <tr className="bg-gray-200">
-              <th className="border border-gray-300 px-4 py-2 text-left">Nome do Fluxo</th>
-              <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
-              <th className="border border-gray-300 px-4 py-2">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {fluxosMock.map((fluxo) => (
-              <tr key={fluxo.id} className="hover:bg-gray-100 cursor-pointer">
-                <td className="border border-gray-300 px-4 py-2">{fluxo.nome}</td>
-                <td className="border border-gray-300 px-4 py-2">{fluxo.status}</td>
-                <td className="border border-gray-300 px-4 py-2 text-center">
-                  <button
-                    onClick={() => handleEditar(fluxo.id)}
-                    className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 transition"
-                  >
-                    Editar
-                  </button>
-                </td>
-              </tr>
+        {erro && <p className="text-red-500 text-center mb-4">{erro}</p>}
+
+        {fluxos.length === 0 ? (
+          <p className="text-gray-600 text-center">Nenhum fluxo encontrado.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {fluxos.map((fluxo) => (
+              <div
+                key={fluxo.flowId}
+                className="border border-gray-200 p-6 rounded shadow-sm hover:shadow-md transition"
+              >
+                <h3 className="text-xl font-semibold text-gray-800 mb-2">{fluxo.name}</h3>
+                {fluxo.description && (
+                  <p className="text-gray-600 mb-2">{fluxo.description}</p>
+                )}
+                <p className={`mb-4 font-medium ${fluxo.active ? 'text-green-600' : 'text-red-500'}`}>
+                  {fluxo.active ? 'Ativo' : 'Inativo'}
+                </p>
+                <button
+                  onClick={() => visualizarDetalhes(fluxo.flowId)}
+                  className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+                >
+                  Visualizar Detalhes
+                </button>
+              </div>
             ))}
-          </tbody>
-        </table>
-
-        <div className="mt-8 text-center">
-          <button
-            onClick={handleVoltar}
-            className="text-red-600 hover:text-red-800 font-semibold"
-          >
-            Voltar ao Dashboard
-          </button>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

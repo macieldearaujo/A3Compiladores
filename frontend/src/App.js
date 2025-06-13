@@ -11,6 +11,9 @@ import StatusTarefas from './pages/gerencia/StatusTarefas';
 import Dashboard from './pages/gerencia/DashboardGerente';
 import DashboardColaborador from './pages/colaborador/DashboardColaborador';
 import Cadastro from './pages/Cadastro';
+import VisualizarFluxo from './pages/gerencia/VisualizarFluxos';
+import CriarFluxo from './pages/gerencia/CriarNovoFluxo';
+import CriarTarefa  from './pages/gerencia/CriarTarefas';
 
 // Colaborador
 import TarefasPendentes from './pages/colaborador/TarefasPendentes';
@@ -26,6 +29,13 @@ function App() {
       <Routes>
         {/* Login */}
         <Route path="/" element={<Login />} />
+        <Route path="/gerencia/fluxo/:id" element={<VisualizarFluxo />} />
+        <Route path="/gerencia/fluxo/:id/editar" element={<EditarFluxo />} />
+        <Route path="/gerencia/criar-fluxo" element={<CriarFluxo />} />
+        <Route path="/gerencia/criar-tarefa" element={<CriarTarefa />} />
+        
+
+
 
         {/* Gerente */}
         <Route path="/gerente/dashboard" element={<Dashboard />} />

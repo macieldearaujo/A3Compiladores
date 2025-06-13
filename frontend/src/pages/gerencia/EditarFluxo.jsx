@@ -1,133 +1,216 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
-const fluxosMock = [
-  { id: 1, nome: "Aprovação de Pedido", etapas: ["Verificar Pedido", "Aprovar Pedido"], status: "Ativo" },
-  { id: 2, nome: "Relatório Mensal", etapas: ["Escrever Relatório", "Revisar", "Enviar"], status: "Em revisão" },
-  { id: 3, nome: "Cadastro de Fornecedor", etapas: ["Preencher Dados", "Validar Documentos"], status: "Concluído" },
-];
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'http://localhost:5000/api',
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export default function EditarFluxo() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [nome, setNome] = useState("");
-  const [etapas, setEtapas] = useState([""]);
-  const [status, setStatus] = useState("Ativo");
+  const [nome, setNome] = useState('');
+  const [descricao, setDescricao] = useState('');
+  const [ativo, setAtivo] = useState(true);
+  const [etapas, setEtapas] = useState([]);
+  const [erro, setErro] = useState('');
+  const [mensagem, setMensagem] = useState('');
+
+  const tiposEtapa = ['FAZER', 'VERIFICAR', 'APROVAR'];
 
   useEffect(() => {
-    const fluxo = fluxosMock.find((f) => f.id === parseInt(id));
-    if (fluxo) {
-      setNome(fluxo.nome);
-      setEtapas(fluxo.etapas);
-      setStatus(fluxo.status);
-    }
+    const carregarFluxo = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await api.get(`/flows/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        const fluxo = response.data.data;
+        setNome(fluxo.name);
+        setDescricao(fluxo.description || '');
+        setAtivo(fluxo.active);
+        setEtapas(fluxo.step);
+      } catch (err) {
+        setErro(err.response?.data?.error || 'Erro ao carregar fluxo');
+      }
+    };
+
+    carregarFluxo();
   }, [id]);
 
-  const handleEtapaChange = (index, value) => {
-    const novasEtapas = [...etapas];
-    novasEtapas[index] = value;
-    setEtapas(novasEtapas);
+  const handleEtapaChange = (index, campo, valor) => {
+    const novas = [...etapas];
+    novas[index][campo] = valor;
+    setEtapas(novas);
   };
 
   const adicionarEtapa = () => {
-    setEtapas([...etapas, ""]);
+    setEtapas([...etapas, { id: uuidv4(), name: 'FAZER', responsible: '' }]);
   };
 
   const removerEtapa = (index) => {
-    const novasEtapas = etapas.filter((_, i) => i !== index);
-    setEtapas(novasEtapas);
+    const novas = etapas.filter((_, i) => i !== index);
+    setEtapas(novas);
   };
 
-  const handleSalvar = (e) => {
+  const validarOrdemEtapas = () => {
+    let encontrouVerificar = false;
+    for (const etapa of etapas) {
+      if (etapa.name === 'VERIFICAR') {
+        encontrouVerificar = true;
+      }
+      if (etapa.name === 'APROVAR' && !encontrouVerificar) {
+        return 'Etapa "APROVAR" só pode vir depois de uma "VERIFICAR".';
+      }
+    }
+    return null;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Fluxo atualizado:", { nome, etapas, status });
-    navigate("/fluxos");
+    setErro('');
+    setMensagem('');
+
+    if (!nome.trim()) return setErro('O nome do fluxo é obrigatório.');
+    if (etapas.length === 0) return setErro('Adicione pelo menos uma etapa.');
+    if (etapas.some(et => !et.name || !et.responsible)) {
+      return setErro('Todas as etapas devem ter tipo e responsável.');
+    }
+
+    const erroOrdem = validarOrdemEtapas();
+    if (erroOrdem) return setErro(erroOrdem);
+
+    try {
+      const token = localStorage.getItem('token');
+      await api.put(`/flows/${id}`, {
+        flowId: id,
+        name: nome,
+        description: descricao,
+        active: ativo,
+        step: etapas,
+      }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setMensagem('Fluxo atualizado com sucesso!');
+      setTimeout(() => navigate(`/gerente/fluxo/${id}`), 1500);
+    } catch (err) {
+      setErro(err.response?.data?.error || 'Erro ao atualizar fluxo');
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="max-w-3xl w-full bg-white p-8 rounded shadow">
-        <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">
-          Editar Fluxo
-        </h1>
+        <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">Editar Fluxo</h2>
 
-        <form onSubmit={handleSalvar} className="space-y-6">
+        {erro && <p className="text-red-500 text-center mb-4">{erro}</p>}
+        {mensagem && <p className="text-green-600 text-center mb-4">{mensagem}</p>}
+
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-gray-700 font-medium mb-1">
-              Nome do Fluxo
-            </label>
+            <label className="block font-medium text-gray-700">Nome do Fluxo</label>
             <input
               type="text"
               value={nome}
               onChange={(e) => setNome(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
+              className="w-full border border-gray-300 px-3 py-2 rounded"
             />
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium mb-2">
-              Etapas do Fluxo
-            </label>
-            {etapas.map((etapa, index) => (
-              <div key={index} className="flex items-center mb-2">
-                <input
-                  type="text"
-                  value={etapa}
-                  onChange={(e) => handleEtapaChange(index, e.target.value)}
-                  className="w-full border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => removerEtapa(index)}
-                  className="ml-2 text-red-600 hover:text-red-800 font-bold"
-                  title="Remover etapa"
-                >
-                  ✕
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={adicionarEtapa}
-              className="mt-2 bg-gray-200 hover:bg-gray-300 text-sm px-3 py-1 rounded transition"
-            >
-              + Adicionar Etapa
-            </button>
+            <label className="block font-medium text-gray-700">Descrição</label>
+            <textarea
+              value={descricao}
+              onChange={(e) => setDescricao(e.target.value)}
+              className="w-full border border-gray-300 px-3 py-2 rounded"
+              rows={2}
+            />
           </div>
 
           <div>
-            <label className="block text-gray-700 font-medium mb-1">Status</label>
+            <label className="block font-medium text-gray-700">Status</label>
             <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="w-full border border-gray-300 px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={ativo}
+              onChange={(e) => setAtivo(e.target.value === 'true')}
+              className="w-full border border-gray-300 px-3 py-2 rounded"
             >
-              <option>Ativo</option>
-              <option>Em revisão</option>
-              <option>Concluído</option>
+              <option value="true">Ativo</option>
+              <option value="false">Inativo</option>
             </select>
           </div>
 
-          <div className="flex justify-between items-center">
-            <button
-              type="button"
-              onClick={() => navigate(-1)}
-              className="text-red-600 hover:text-red-800 font-semibold"
-            >
-              Cancelar
-            </button>
+          <div>
+            <label className="block font-medium text-gray-700 mb-2">Etapas</label>
+            {etapas.map((etapa, index) => (
+              <div key={etapa.id} className="mb-3 border p-3 rounded shadow-sm space-y-2">
+                <select
+                  value={etapa.name}
+                  onChange={(e) => handleEtapaChange(index, 'name', e.target.value)}
+                  className="w-full border border-gray-300 px-3 py-2 rounded"
+                >
+                  {tiposEtapa.map((tipo) => (
+                    <option key={tipo} value={tipo}>{tipo}</option>
+                  ))}
+                </select>
+
+                <input
+                  type="text"
+                  placeholder="Responsável (ID)"
+                  value={etapa.responsible}
+                  onChange={(e) => handleEtapaChange(index, 'responsible', e.target.value)}
+                  required
+                  className="w-full border border-gray-300 px-3 py-2 rounded"
+                />
+
+                <button
+                  type="button"
+                  onClick={() => removerEtapa(index)}
+                  className="text-red-600 hover:underline text-sm"
+                >
+                  Remover etapa
+                </button>
+              </div>
+            ))}
 
             <button
-              type="submit"
-              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition"
+              type="button"
+              onClick={adicionarEtapa}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition mt-2"
             >
-              Salvar Alterações
+              Adicionar Etapa
             </button>
           </div>
+
+          <button
+            type="submit"
+            className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition"
+          >
+            Salvar Alterações
+          </button>
         </form>
+
+        <div className="text-center mt-6">
+          <button
+            onClick={() => navigate(-1)}
+            className="text-gray-600 hover:underline"
+          >
+            Cancelar
+          </button>
+        </div>
       </div>
     </div>
   );

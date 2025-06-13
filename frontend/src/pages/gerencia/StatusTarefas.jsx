@@ -1,64 +1,86 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from 'axios';
 
-const tarefasMock = [
-  { id: 1, titulo: "Enviar relatório financeiro", status: "Em andamento", colaborador: "Ana" },
-  { id: 2, titulo: "Aprovar pedido de compra", status: "Pendente", colaborador: "Carlos" },
-  { id: 3, titulo: "Revisar contrato", status: "Concluído", colaborador: "Beatriz" },
-  { id: 4, titulo: "Atualizar base de dados", status: "Em atraso", colaborador: "Eduardo" },
-];
+const api = axios.create({
+  baseURL: 'http://localhost:5000/api',
+});
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 
 export default function StatusTarefas() {
+  const [tarefas, setTarefas] = useState([]);
+  const [erro, setErro] = useState("");
   const navigate = useNavigate();
 
-  function handleVoltar() {
-    navigate(-1);
-  }
-
-  // Map status para cores claras de fundo
   const statusBgColors = {
-    "Concluído": "bg-green-100",
-    "Em andamento": "bg-blue-100",
-    "Em atraso": "bg-red-100",
-    "Pendente": "bg-yellow-100",
+    "concluída": "bg-green-100 text-green-800",
+    "em andamento": "bg-blue-100 text-blue-800",
+    "em atraso": "bg-red-100 text-red-800",
+    "pendente": "bg-yellow-100 text-yellow-800",
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-8">
-      <div className="max-w-4xl w-full bg-white p-8 rounded shadow">
-        <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">
-          Status das Tarefas
-        </h1>
+  useEffect(() => {
+    const carregarTarefas = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await api.get("/tasks", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        setTarefas(response.data.data || []);
+      } catch (err) {
+        setErro(err.response?.data?.error || "Erro ao carregar tarefas");
+      }
+    };
 
-        <div className="overflow-x-auto">
-          <table className="w-full table-auto border-collapse border border-gray-300">
-            <thead>
-              <tr className="bg-gray-200">
-                <th className="border border-gray-300 px-4 py-2 text-left">Tarefa</th>
-                <th className="border border-gray-300 px-4 py-2 text-center">Status</th>
-                <th className="border border-gray-300 px-4 py-2 text-center">Colaborador</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tarefasMock.map(({ id, titulo, status, colaborador }) => (
-                <tr key={id} className="hover:bg-gray-50 cursor-default">
-                  <td className="border border-gray-300 px-4 py-2">{titulo}</td>
-                  <td
-                    className={`border border-gray-300 px-4 py-2 text-center font-semibold rounded ${statusBgColors[status] || ""}`}
-                  >
-                    {status}
-                  </td>
-                  <td className="border border-gray-300 px-4 py-2 text-center">{colaborador}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+    carregarTarefas();
+  }, []);
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 py-10">
+      <div className="max-w-4xl w-full bg-white p-8 rounded shadow">
+        <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">
+          Status das Tarefas
+        </h2>
+
+        {erro && <p className="text-red-500 text-center mb-4">{erro}</p>}
+
+        {tarefas.length === 0 ? (
+          <p className="text-gray-600 text-center">Nenhuma tarefa encontrada.</p>
+        ) : (
+          <ul className="divide-y divide-gray-200">
+            {tarefas.map(({ taskId, title, status, responsible }) => (
+              <li
+                key={taskId}
+                className="py-4 px-2 flex flex-col sm:flex-row sm:justify-between sm:items-center"
+              >
+                <div className="mb-2 sm:mb-0">
+                  <h3 className="text-lg font-medium text-gray-800">{title}</h3>
+                  <p className="text-sm text-gray-500">Responsável: {responsible}</p>
+                </div>
+                <span
+                  className={`text-sm font-semibold px-3 py-1 rounded ${statusBgColors[status] || "bg-gray-100 text-gray-600"}`}
+                >
+                  {status}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
 
         <div className="mt-8 text-center">
           <button
-            onClick={handleVoltar}
-            className="text-red-600 hover:text-red-800 font-semibold"
+            onClick={() => navigate(-1)}
+            className="text-blue-600 hover:underline font-medium"
           >
             Voltar ao Dashboard
           </button>

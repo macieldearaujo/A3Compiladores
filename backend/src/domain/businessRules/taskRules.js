@@ -1,4 +1,4 @@
-import { findOneOnDatabase, insertOnDatabase, findManyOnDatabase,  updateOneOnDatabase } from "../../infrastructure/drivers/mongo/adapter.js";
+import { findOneOnDatabase, insertOnDatabase, findManyOnDatabase, updateOneOnDatabase } from "../../infrastructure/drivers/mongo/adapter.js";
 import { v4 as uuidv4 } from 'uuid'
 
 export async function createTask(taskInfo, userId, userRole) {
@@ -6,41 +6,66 @@ export async function createTask(taskInfo, userId, userRole) {
         if (userRole.toLowerCase() !== "gerente") {
             return { error: "Acesso negado", status: 403 };
         }
-        
-        taskInfo.title = taskInfo.title.toUpperCase();
-        const query = {
-            title: taskInfo.title,
-        };
-        const taskOnDb = await findOneOnDatabase(query, { projection: { _id: 0 } }, "tasks");
 
-        if (taskOnDb != null) {
-            return { error: "Tarefa com o mesmo nome já existe", status: 409 };
+        const flow = await findOneOnDatabase(
+            { flowId: taskInfo.flowId },
+            { projection: { _id: 0 } },
+            collectionNames.flows
+        );
+
+        if (!flow) {
+            return { error: "Fluxo não encontrado", status: 404 };
         }
+
+        const step = flow.step.find(
+            (s) => s.id === taskInfo.stepId && s.name === taskInfo.stepName
+        );
+
+        if (!step) {
+            return { error: "Etapa do fluxo inválida ou não encontrada", status: 400 };
+        }
+
+        const tarefaExistente = await findOneOnDatabase(
+            {
+                flowId: taskInfo.flowId,
+                stepId: taskInfo.stepId,
+                responsible: taskInfo.responsible,
+                status: { $in: ["pendente", "em andamento"] },
+            },
+            { projection: { _id: 0 } },
+            collectionNames.tasks
+        );
+
+        if (tarefaExistente) {
+            return {
+                error: "Já existe uma tarefa pendente ou em andamento para essa etapa e responsável",
+                status: 409,
+            };
+        }
+
         taskInfo.taskId = uuidv4();
-        taskInfo.createdBy = userId;
-        taskInfo.updatedAt = new Date().toISOString().split('.')[0] + 'Z';
-        const json_task_info = JSON.parse(JSON.stringify(taskInfo));
+        const jsonTask = JSON.parse(JSON.stringify(taskInfo));
 
-        const find_flow = await findOneOnDatabase({ flowId: taskInfo.flowId }, { projection: { _id: 0 } }, "flows");
-        if (!find_flow) {
-            return { error: `Fluxo não encontrado`, status: 404 };
-        }
-        const find_responsible = await findOneOnDatabase({ id: taskInfo.responsible }, { projection: { _id: 0, password: 0 } }, "users");
-        if (!find_responsible) {
-            return { error: `Responsável não encontrado`, status: 404 };
-        }
-
-        const response = await insertOnDatabase(json_task_info, "tasks");
+        const response = await insertOnDatabase(jsonTask, collectionNames.tasks);
 
         if (response.acknowledged) {
-            return { message: "Tarefa criada com sucesso", taskId: taskInfo.taskId, status: 201 };
+            return {
+                message: "Tarefa criada com sucesso",
+                taskId: taskInfo.taskId,
+                status: 201,
+            };
         } else {
             return { error: "Falha ao criar tarefa", status: 500 };
         }
     } catch (error) {
-        return { error: "Ocorreu um erro inesperado", details: error.message, status: 500 };
+        return {
+            error: "Erro inesperado ao criar tarefa",
+            details: error.message,
+            status: 500,
+        };
     }
 }
+
 
 export async function getAllTasks(userId, userRole) {
     try {

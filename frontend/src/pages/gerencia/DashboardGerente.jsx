@@ -22,7 +22,7 @@ export default function Dashboard() {
             descricao="Monte um novo fluxo de trabalho."
             corBotao="bg-blue-600 hover:bg-blue-700"
             textoBotao="Novo Fluxo"
-            onClick={() => navigate("/gerencia/criar-fluxo")}
+            onClick={() => navigate("/gerente/criar-fluxo")}
           />
           <Card
             titulo="Fluxos Existentes"

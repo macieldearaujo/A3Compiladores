@@ -1,6 +1,7 @@
 import { findOneOnDatabase, insertOnDatabase, findManyOnDatabase, updateOneOnDatabase } from "../../infrastructure/drivers/mongo/adapter.js";
 import { v4 as uuidv4 } from 'uuid'
-import { collectionNames } from "../../infrastructure/constants/mongoConstants.js"; 
+import { collectionNames } from "../../infrastructure/constants/mongoConstants.js";
+
 export async function createTask(taskInfo, userId, userRole) {
     try {
         if (userRole.toLowerCase() !== "gerente") {
@@ -94,14 +95,46 @@ export async function updateStatusTask(id, newStatus, userId, userRole) {
         const taskOnDb = await findOneOnDatabase(query, { projection: { _id: 0 } }, "tasks");
 
         if (taskOnDb === null) {
-            return { message: "Nenhuma tarefa encontrada", status: 200 };
+            return { error: "Nenhuma tarefa encontrada", status: 404 };
         }
-        if (taskOnDb.responsible !== userId && userRole.toLowerCase() !== "gerente") {
-            return { error: "Você não tem permissão para atualizar esta tarefa", status: 403 };
-        }
+
         if (taskOnDb.status === "concluída" && newStatus.status !== "concluída") {
             return { error: "Tarefa já concluída, não é possível alterar o status", status: 400 };
         }
+
+        if (taskOnDb.responsible !== userId && userRole.toLowerCase() !== "gerente") {
+            return { error: "Você não tem permissão para atualizar esta tarefa", status: 403 };
+        }
+
+        const fluxo = await findOneOnDatabase({ flowId: taskOnDb.flowId }, {}, "flows");
+        if (!fluxo) {
+            return { error: "Fluxo vinculado a tarefa não encontrado", status: 404 };
+        }
+
+        const ordemEtapas = fluxo.step.map(e => e.id);
+        const indexEtapaAtual = ordemEtapas.indexOf(taskOnDb.stepId);
+
+        if (indexEtapaAtual > 0 && userRole.toLowerCase() !== "gerente") {
+            const tarefasDoMesmoFluxo = await findManyOnDatabase(
+                { flowId: taskOnDb.flowId, responsible: userId },
+                {},
+                "tasks"
+            );
+
+            const etapasConcluidas = tarefasDoMesmoFluxo
+                .filter(t => t.status === "concluída")
+                .map(t => t.stepId);
+
+            for (let i = 0; i < indexEtapaAtual; i++) {
+                if (!etapasConcluidas.includes(ordemEtapas[i])) {
+                    return {
+                        error: "Você precisa concluir as etapas anteriores antes de avançar para esta.",
+                        status: 400
+                    };
+                }
+            }
+        }
+
         const updateData = {
             status: newStatus.status,
             updatedAt: new Date().toISOString().split('.')[0] + 'Z',
@@ -118,6 +151,7 @@ export async function updateStatusTask(id, newStatus, userId, userRole) {
         } else {
             return { error: "Falha ao atualizar tarefa", status: 500 };
         }
+
     } catch (error) {
         return { error: "Ocorreu um erro inesperado", details: error.message, status: 500 };
     }

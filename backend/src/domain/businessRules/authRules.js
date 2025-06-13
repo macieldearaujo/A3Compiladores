@@ -2,6 +2,8 @@ import bcrypt from 'bcrypt';
 import { findOneOnDatabase } from "../../infrastructure/drivers/mongo/adapter.js";
 import jwt from 'jsonwebtoken';
 import { loginResponseSchema } from '../models/authModel.js';
+import dotenv from 'dotenv';
+dotenv.config();
 import { collectionNames } from '../../infrastructure/constants/mongoConstants.js';
 
 
@@ -22,8 +24,8 @@ export async function userLogin(loginInfo) {
         }
 
         const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role }, // payload
-            "ifSMpRAq50TBF9eg6RAs0wv3ikbfHIhg",//process.env.JWT_SECRET
+            { id: user.id, email: user.email, role: user.role },
+            process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
         user.token = token;

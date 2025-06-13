@@ -4,7 +4,7 @@ export const collectionNames = {
   flows: 'flows'
 };
 export const userRoles = {
-  manager: 'manager',
-  collaborator: 'collaborator',
+  manager: 'gerente',
+  collaborator: 'colaborador',
 };
 export const databaseName = 'corpFlow';

@@ -1,6 +1,6 @@
 import { findOneOnDatabase, insertOnDatabase, findManyOnDatabase, updateOneOnDatabase } from "../../infrastructure/drivers/mongo/adapter.js";
 import { v4 as uuidv4 } from 'uuid'
-
+import { collectionNames } from "../../infrastructure/constants/mongoConstants.js"; 
 export async function createTask(taskInfo, userId, userRole) {
     try {
         if (userRole.toLowerCase() !== "gerente") {
@@ -58,11 +58,9 @@ export async function createTask(taskInfo, userId, userRole) {
             return { error: "Falha ao criar tarefa", status: 500 };
         }
     } catch (error) {
-        return {
-            error: "Erro inesperado ao criar tarefa",
-            details: error.message,
-            status: 500,
-        };
+        console.error("Erro ao criar tarefa:", error);
+        return { error: "Ocorreu um erro inesperado", details: error.message, status: 500 };
+
     }
 }
 

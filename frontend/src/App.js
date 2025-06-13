@@ -8,9 +8,11 @@ import FluxosExistentes from './pages/gerencia/FluxosExistentes';
 import CriarNovoFluxo from './pages/gerencia/CriarNovoFluxo';
 import EditarFluxo from './pages/gerencia/EditarFluxo';
 import StatusTarefas from './pages/gerencia/StatusTarefas';
+import Dashboard from './pages/gerencia/DashboardGerente';
+import DashboardColaborador from './pages/colaborador/DashboardColaborador';
+import Cadastro from './pages/Cadastro';
 
 // Colaborador
-import DashboardColaborador from './pages/colaborador/DashboardColaborador';
 import TarefasPendentes from './pages/colaborador/TarefasPendentes';
 import TarefasConcluidas from './pages/colaborador/HistoricoTarefas';
 
@@ -26,7 +28,9 @@ function App() {
         <Route path="/" element={<Login />} />
 
         {/* Gerente */}
-        <Route path="/gerente/dashboard" element={<DashboardGerente />} />
+        <Route path="/gerente/dashboard" element={<Dashboard />} />
+        <Route path="/colaborador/dashboard" element={<DashboardColaborador />} />
+        <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/gerente/fluxos-existentes" element={<FluxosExistentes />} />
         <Route path="/gerente/criar-fluxo" element={<CriarNovoFluxo />} />
         <Route path="/gerente/fluxos/:id/editar" element={<EditarFluxo />} />

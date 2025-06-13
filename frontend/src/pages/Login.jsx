@@ -16,16 +16,24 @@ export default function Login() {
         password: senha,
       });
 
-      const { token, user } = response.data;
+      const { token, ...user } = response.data.value;
 
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
 
-      window.location.href = '/dashboard';
+      if (user.role === 'gerente') {
+        window.location.href = '/gerente/dashboard';
+      } else if (user.role === 'colaborador') {
+        window.location.href = '/colaborador/dashboard';
+      } else {
+        window.location.href = '/acesso-negado';
+      }
+
     } catch (err) {
       setErro(err.response?.data?.error || 'Erro ao fazer login');
     }
   };
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
@@ -73,6 +81,16 @@ export default function Login() {
             Entrar
           </button>
         </form>
+        <div className="mt-4 text-center">
+          <span className="text-sm text-gray-600">Não tem uma conta?</span>
+          <button
+            onClick={() => window.location.href = '/cadastro'}
+            className="ml-2 text-blue-600 hover:underline font-medium"
+          >
+            Cadastre-se
+          </button>
+        </div>
+
       </div>
     </div>
   );

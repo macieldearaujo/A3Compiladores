@@ -9,36 +9,52 @@ import { collectionNames } from '../../infrastructure/constants/mongoConstants.j
 
 export async function userLogin(loginInfo) {
     try {
+        console.log("🚩 Dados recebidos no login:", loginInfo);
+
+
         const user = await findOneOnDatabase(
-            { email: loginInfo.email }, { projection: { _id: 0} },
+            { email: loginInfo.email },
+            {},
             collectionNames.users
         );
+
+        console.log("🚩 Usuário encontrado no banco:", user);
+
 
         if (!user) {
             return { error: "Credenciais inválidas", status: 401 };
         }
 
         const isMatch = await bcrypt.compare(loginInfo.password, user.password);
+        console.log("🚩 Resultado do bcrypt.compare:", isMatch);
+
         if (!isMatch) {
             return { error: "Credenciais inválidas", status: 401 };
         }
 
         const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
+            { id: user._id.toString(), email: user.email, role: user.role },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
-        user.token = token;
-        delete user.password;
-        delete user.email;
-        const { error, value } = loginResponseSchema.validate(user);
+
+        const userWithId = {
+            id: user._id.toString(),
+            name: user.nome,
+            role: user.role,
+            token,
+        };
+
+        const { error, value } = loginResponseSchema.validate(userWithId);
 
         if (error) {
             return { error: "Erro ao retornar detalhes do token", status: 400 };
         }
 
         return { value, status: 200 };
+
     } catch (error) {
+        console.error("❌ Erro geral no login:", error);
         return { error: "Falha no login", details: error.message, status: 500 };
     }
 }

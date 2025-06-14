@@ -4,6 +4,9 @@ import usersRoutes from './routes/usersRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import flowRoutes from './routes/flowRoutes.js';
 import taskRoutes from './routes/taskRoutes.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const app = express();
 app.use(cors());
